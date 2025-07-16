@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+{% block title %}仪器管理系统 - 首页{% endblock %}
+{% block head %}
+    <script src="https://cdn.staticfile.org/echarts/5.4.0/echarts.min.js"></script>
+    <style>
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .dashboard-header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .dashboard-header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        .stat-card.primary { border-left-color: #3498db; }
+        .stat-card.success { border-left-color: #2ecc71; }
+        .stat-card.warning { border-left-color: #f39c12; }
+        .stat-card.danger { border-left-color: #e74c3c; }
+        .stat-card.info { border-left-color: #9b59b6; }
+        .stat-card.secondary { border-left-color: #95a5a6; }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 0;
+            line-height: 1;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .stat-icon {
+            float: right;
+            font-size: 2em;
+            opacity: 0.3;
+            margin-top: -10px;
+        }
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .chart-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            .dashboard-header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="dashboard-header">
+    <h1>🔬 仪器管理系统</h1>
+    <p>欢迎回来，{{ name }}！今天是一个管理仪器设备的好日子</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-icon">📊</div>
+        <div class="stat-number" id="total-instruments">-</div>
+        <div class="stat-label">仪器种类</div>
+    </div>
+    <div class="stat-card success">
+        <div class="stat-icon">✅</div>
+        <div class="stat-number" id="available-instruments">-</div>
+        <div class="stat-label">可用设备</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-icon">📤</div>
+        <div class="stat-number" id="borrowed-instruments">-</div>
+        <div class="stat-label">已借出</div>
+    </div>
+    <div class="stat-card info">
+        <div class="stat-icon">👥</div>
+        <div class="stat-number" id="total-users">-</div>
+        <div class="stat-label">注册用户</div>
+    </div>
+    <div class="stat-card danger">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-number" id="overdue-count">-</div>
+        <div class="stat-label">逾期未还</div>
+    </div>
+    <div class="stat-card secondary">
+        <div class="stat-icon">📈</div>
+        <div class="stat-number" id="today-activity">-</div>
+        <div class="stat-label">今日活动</div>
+    </div>
+</div>
+
+<div class="charts-container">
+    <div class="chart-card">
+        <div class="chart-title">📈 近10天借还趋势</div>
+        <div id="trend-chart" style="width: 100%; height: 350px;"></div>
+    </div>
+    <div class="chart-card">
+        <div class="chart-title">🏷️ 仪器类别分布</div>
+        <div id="category-chart" style="width: 100%; height: 350px;"></div>
+    </div>
+</div>
+
+<div class="charts-container" style="margin-top: 20px;">
+    <div class="chart-card">
+        <div class="chart-title">📊 设备使用率排行</div>
+        <div id="usage-chart" style="width: 100%; height: 350px;"></div>
+    </div>
+    <div class="chart-card">
+        <div class="chart-title">👤 用户活跃度</div>
+        <div id="user-activity-chart" style="width: 100%; height: 350px;"></div>
+    </div>
+</div>
+
+{% endblock %}
+{% block script %}
+<script>
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 加载统计数据
+    loadStatistics();
+
+    // 初始化图表
+    initTrendChart();
+    initCategoryChart();
+    initUsageChart();
+    initUserActivityChart();
+});
+
+// 加载统计数据
+function loadStatistics() {
+    fetch('/api/statistics')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('total-instruments').textContent = data.total_instruments || 0;
+            document.getElementById('available-instruments').textContent = data.available_instruments || 0;
+            document.getElementById('borrowed-instruments').textContent = data.borrowed_instruments || 0;
+            document.getElementById('total-users').textContent = data.total_users || 0;
+            document.getElementById('overdue-count').textContent = data.overdue_count || 0;
+            document.getElementById('today-activity').textContent = data.today_activity || 0;
+        })
+        .catch(error => {
+            console.error('加载统计数据失败:', error);
+        });
+}
+
+// 初始化趋势图表
+function initTrendChart() {
+    const chart = echarts.init(document.getElementById('trend-chart'));
+
+    chart.setOption({
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'cross'
+            }
+        },
+        legend: {
+            data: ['借出', '归还']
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            boundaryGap: false,
+            data: []
+        },
+        yAxis: {
+            type: 'value'
+        },
+        series: [
+            {
+                name: '借出',
+                type: 'line',
+                stack: 'Total',
+                smooth: true,
+                lineStyle: {
+                    color: '#3498db'
+                },
+                areaStyle: {
+                    color: {
+                        type: 'linear',
+                        x: 0, y: 0, x2: 0, y2: 1,
+                        colorStops: [
+                            { offset: 0, color: 'rgba(52, 152, 219, 0.3)' },
+                            { offset: 1, color: 'rgba(52, 152, 219, 0.1)' }
+                        ]
+                    }
+                },
+                data: []
+            },
+            {
+                name: '归还',
+                type: 'line',
+                stack: 'Total',
+                smooth: true,
+                lineStyle: {
+                    color: '#2ecc71'
+                },
+                areaStyle: {
+                    color: {
+                        type: 'linear',
+                        x: 0, y: 0, x2: 0, y2: 1,
+                        colorStops: [
+                            { offset: 0, color: 'rgba(46, 204, 113, 0.3)' },
+                            { offset: 1, color: 'rgba(46, 204, 113, 0.1)' }
+                        ]
+                    }
+                },
+                data: []
+            }
+        ]
+    });
+
+    // 加载趋势数据
+    fetch('/api/trend-data')
+        .then(response => response.json())
+        .then(data => {
+            chart.setOption({
+                xAxis: {
+                    data: data.dates
+                },
+                series: [
+                    { data: data.borrow_counts },
+                    { data: data.return_counts }
+                ]
+            });
+        })
+        .catch(error => {
+            console.error('加载趋势数据失败:', error);
+        });
+}
+
+// 初始化类别分布图表
+function initCategoryChart() {
+    const chart = echarts.init(document.getElementById('category-chart'));
+
+    chart.setOption({
+        tooltip: {
+            trigger: 'item',
+            formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        legend: {
+            orient: 'vertical',
+            left: 'left'
+        },
+        series: [
+            {
+                name: '仪器类别',
+                type: 'pie',
+                radius: ['40%', '70%'],
+                avoidLabelOverlap: false,
+                label: {
+                    show: false,
+                    position: 'center'
+                },
+                emphasis: {
+                    label: {
+                        show: true,
+                        fontSize: '18',
+                        fontWeight: 'bold'
+                    }
+                },
+                labelLine: {
+                    show: false
+                },
+                data: []
+            }
+        ]
+    });
+
+    // 加载类别数据
+    fetch('/api/category-data')
+        .then(response => response.json())
+        .then(data => {
+            chart.setOption({
+                series: [{
+                    data: data
+                }]
+            });
+        })
+        .catch(error => {
+            console.error('加载类别数据失败:', error);
+        });
+}
+
+// 初始化使用率图表
+function initUsageChart() {
+    const chart = echarts.init(document.getElementById('usage-chart'));
+
+    chart.setOption({
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            }
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'value'
+        },
+        yAxis: {
+            type: 'category',
+            data: []
+        },
+        series: [
+            {
+                name: '使用次数',
+                type: 'bar',
+                data: [],
+                itemStyle: {
+                    color: function(params) {
+                        const colors = ['#3498db', '#2ecc71', '#f39c12', '#e74c3c', '#9b59b6'];
+                        return colors[params.dataIndex % colors.length];
+                    }
+                }
+            }
+        ]
+    });
+
+    // 加载使用率数据
+    fetch('/api/usage-data')
+        .then(response => response.json())
+        .then(data => {
+            chart.setOption({
+                yAxis: {
+                    data: data.names
+                },
+                series: [{
+                    data: data.values
+                }]
+            });
+        })
+        .catch(error => {
+            console.error('加载使用率数据失败:', error);
+        });
+}
+
+// 初始化用户活跃度图表
+function initUserActivityChart() {
+    const chart = echarts.init(document.getElementById('user-activity-chart'));
+
+    chart.setOption({
+        tooltip: {
+            trigger: 'axis'
+        },
+        legend: {
+            data: ['借用次数']
+        },
+        grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+        },
+        xAxis: {
+            type: 'category',
+            data: []
+        },
+        yAxis: {
+            type: 'value'
+        },
+        series: [
+            {
+                name: '借用次数',
+                type: 'bar',
+                data: [],
+                itemStyle: {
+                    color: {
+                        type: 'linear',
+                        x: 0, y: 0, x2: 0, y2: 1,
+                        colorStops: [
+                            { offset: 0, color: '#667eea' },
+                            { offset: 1, color: '#764ba2' }
+                        ]
+                    }
+                }
+            }
+        ]
+    });
+
+    // 加载用户活跃度数据
+    fetch('/api/user-activity-data')
+        .then(response => response.json())
+        .then(data => {
+            chart.setOption({
+                xAxis: {
+                    data: data.names
+                },
+                series: [{
+                    data: data.values
+                }]
+            });
+        })
+        .catch(error => {
+            console.error('加载用户活跃度数据失败:', error);
+        });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,461 @@
+{% extends "base.html" %}
+{% block title %}用户信息查询 - 仪器管理系统{% endblock %}
+
+{% block head %}
+<style>
+    .search-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px 20px;
+        border-radius: 12px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    .search-header h1 {
+        margin: 0;
+        font-size: 2.2em;
+        font-weight: 300;
+    }
+    .search-header p {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+    }
+    .search-container {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    .search-form {
+        display: flex;
+        gap: 20px;
+        align-items: end;
+    }
+    .search-form .form-group {
+        flex: 1;
+    }
+    .user-info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        display: none;
+    }
+    .user-info-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f1f3f4;
+    }
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        margin-right: 20px;
+    }
+    .user-basic-info h3 {
+        margin: 0 0 5px 0;
+        font-size: 1.4em;
+        color: #333;
+    }
+    .user-basic-info p {
+        margin: 0;
+        color: #666;
+        font-size: 0.9em;
+    }
+    .user-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+    .detail-label {
+        font-size: 0.85em;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+    .detail-value {
+        font-weight: 600;
+        color: #333;
+        font-size: 1.1em;
+    }
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-normal {
+        background: #d4edda;
+        color: #155724;
+    }
+    .status-warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+    .status-danger {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    .records-container {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: none;
+    }
+    .records-header {
+        background: #f8f9fa;
+        padding: 20px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .records-title {
+        font-size: 1.2em;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+    .record-item {
+        padding: 20px;
+        border-bottom: 1px solid #f1f3f4;
+        transition: background 0.3s ease;
+    }
+    .record-item:hover {
+        background: #f8f9fa;
+    }
+    .record-item:last-child {
+        border-bottom: none;
+    }
+    .record-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .instrument-name {
+        font-size: 1.1em;
+        font-weight: 600;
+        color: #333;
+    }
+    .record-status {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: 600;
+    }
+    .status-returned {
+        background: #d4edda;
+        color: #155724;
+    }
+    .status-borrowed {
+        background: #fff3cd;
+        color: #856404;
+    }
+    .status-overdue {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    .record-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        font-size: 0.9em;
+        color: #666;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+    .empty-state i {
+        font-size: 4em;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+    @media (max-width: 768px) {
+        .search-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .user-info-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        .user-avatar {
+            margin-right: 0;
+            margin-bottom: 15px;
+        }
+        .user-details {
+            grid-template-columns: 1fr;
+        }
+        .record-details {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="search-header">
+    <h1>👥 用户信息查询</h1>
+    <p>查询用户基本信息和仪器借用记录</p>
+</div>
+
+<div class="search-container">
+    <form class="search-form" id="searchForm">
+        <div class="form-group">
+            <label class="modern-form-label">用户卡号</label>
+            {{ form.card(class="modern-form-input", placeholder="请输入用户卡号") }}
+        </div>
+        <div>
+            <button type="submit" class="modern-btn">
+                <i class="layui-icon layui-icon-search"></i> 查询
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="user-info-card" id="userInfoCard">
+    <div class="user-info-header">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <div class="user-basic-info">
+            <h3 id="userName">-</h3>
+            <p>用户卡号: <span id="userCardId">-</span></p>
+        </div>
+    </div>
+    <div class="user-details">
+        <div class="detail-item">
+            <div class="detail-label">性别</div>
+            <div class="detail-value" id="userGender">-</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">联系电话</div>
+            <div class="detail-value" id="userPhone">-</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">有效期至</div>
+            <div class="detail-value" id="userValidDate">-</div>
+        </div>
+        <div class="detail-item">
+            <div class="detail-label">账户状态</div>
+            <div class="detail-value">
+                <span class="status-badge" id="userStatus">正常</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="records-container" id="recordsContainer">
+    <div class="records-header">
+        <h3 class="records-title">📋 借用记录</h3>
+    </div>
+    <div id="recordsContent">
+        <!-- 借用记录将在这里显示 -->
+    </div>
+</div>
+
+<div class="empty-state" id="emptyState">
+    <i class="layui-icon layui-icon-search"></i>
+    <h3>开始查询</h3>
+    <p>请输入用户卡号来查询用户信息和借用记录</p>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchForm = document.getElementById('searchForm');
+    const userInfoCard = document.getElementById('userInfoCard');
+    const recordsContainer = document.getElementById('recordsContainer');
+    const recordsContent = document.getElementById('recordsContent');
+    const emptyState = document.getElementById('emptyState');
+
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(searchForm);
+        const cardId = formData.get('card');
+
+        if (!cardId.trim()) {
+            showAlert('请输入用户卡号', 'warning');
+            return;
+        }
+
+        // 显示加载状态
+        showLoading();
+
+        // 查询用户信息
+        Promise.all([
+            fetch('{{ url_for("find_student") }}', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json()),
+
+            fetch('{{ url_for("find_record") }}', {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+        ])
+        .then(([userData, recordData]) => {
+            hideLoading();
+            displayUserInfo(userData, cardId);
+            displayRecords(recordData);
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('查询失败:', error);
+            showAlert('查询失败，请稍后重试', 'error');
+        });
+    });
+
+    function displayUserInfo(userData, cardId) {
+        if (userData.length === 0) {
+            showAlert('未找到该用户信息', 'warning');
+            hideResults();
+            return;
+        }
+
+        const user = userData[0];
+
+        // 显示用户信息
+        document.getElementById('userName').textContent = user.name;
+        document.getElementById('userCardId').textContent = cardId;
+        document.getElementById('userGender').textContent = user.gender;
+        document.getElementById('userValidDate').textContent = user.valid_date;
+
+        // 设置用户头像
+        const avatar = document.getElementById('userAvatar');
+        avatar.textContent = user.name.charAt(0);
+
+        // 设置账户状态
+        const statusElement = document.getElementById('userStatus');
+        if (user.debt) {
+            statusElement.textContent = '欠费';
+            statusElement.className = 'status-badge status-danger';
+        } else {
+            statusElement.textContent = '正常';
+            statusElement.className = 'status-badge status-normal';
+        }
+
+        // 显示用户信息卡片
+        emptyState.style.display = 'none';
+        userInfoCard.style.display = 'block';
+        userInfoCard.classList.add('fade-in');
+    }
+
+    function displayRecords(recordData) {
+        if (recordData.length === 0) {
+            recordsContent.innerHTML = `
+                <div class="empty-state">
+                    <i class="layui-icon layui-icon-face-smile"></i>
+                    <h3>暂无借用记录</h3>
+                    <p>该用户还没有借用过任何仪器设备</p>
+                </div>
+            `;
+        } else {
+            let html = '';
+            recordData.forEach(record => {
+                const status = getRecordStatus(record);
+                html += `
+                    <div class="record-item fade-in">
+                        <div class="record-header">
+                            <div class="instrument-name">${record.book_name}</div>
+                            <div class="record-status ${status.class}">${status.text}</div>
+                        </div>
+                        <div class="record-details">
+                            <div>
+                                <strong>设备编号:</strong> ${record.barcode}
+                            </div>
+                            <div>
+                                <strong>制造商:</strong> ${record.author}
+                            </div>
+                            <div>
+                                <strong>借用日期:</strong> ${record.start_date}
+                            </div>
+                            <div>
+                                <strong>应还日期:</strong> ${record.due_date}
+                            </div>
+                            <div>
+                                <strong>归还日期:</strong> ${record.end_date || '未归还'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            recordsContent.innerHTML = html;
+        }
+
+        recordsContainer.style.display = 'block';
+        recordsContainer.classList.add('fade-in');
+    }
+
+    function getRecordStatus(record) {
+        if (record.end_date && record.end_date !== '未归还') {
+            return { class: 'status-returned', text: '已归还' };
+        }
+
+        // 检查是否逾期
+        const dueDate = new Date(record.due_date);
+        const today = new Date();
+
+        if (today > dueDate) {
+            return { class: 'status-overdue', text: '逾期未还' };
+        } else {
+            return { class: 'status-borrowed', text: '借用中' };
+        }
+    }
+
+    function showLoading() {
+        recordsContent.innerHTML = `
+            <div style="text-align: center; padding: 40px;">
+                <div class="modern-loading"></div>
+                <p style="margin-top: 15px; color: #666;">正在查询...</p>
+            </div>
+        `;
+        recordsContainer.style.display = 'block';
+        emptyState.style.display = 'none';
+    }
+
+    function hideLoading() {
+        // Loading will be replaced by results
+    }
+
+    function hideResults() {
+        userInfoCard.style.display = 'none';
+        recordsContainer.style.display = 'none';
+        emptyState.style.display = 'block';
+    }
+
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `modern-alert ${type}`;
+        alertDiv.textContent = message;
+
+        searchForm.parentNode.insertBefore(alertDiv, searchForm);
+
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+});
+</script>
+{% endblock %}

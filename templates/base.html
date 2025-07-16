@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>{% block title %}{% endblock %}</title>
+  <link rel="stylesheet" href="../static/layui/css/layui.css">
+  <link rel="stylesheet" href="../static/modern.css">
+  <script src="https://cdn.staticfile.org/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://cdn.staticfile.org/popper.js/1.12.5/umd/popper.min.js"></script>
+  <script src="https://cdn.staticfile.org/twitter-bootstrap/4.1.0/js/bootstrap.min.js"></script>
+  <style>
+      .alert{position:relative;padding:.75rem 1.25rem;margin-bottom:1rem;border:1px solid transparent;border-radius:.25rem}
+      .close{position:absolute;top:0;right:0;padding:.75rem 1.25rem;color:inherit}
+      .alert-warning{color:#856404;background-color:#fff3cd;border-color:#ffeeba}
+      .close{float:right;font-size:1.5rem;font-weight:700;line-height:1;color:#000;text-shadow:0 1px 0 #fff;opacity:.5}
+      .close:focus,.close:hover{color:#000;text-decoration:none;opacity:.75}
+      .close:not(:disabled):not(.disabled){cursor:pointer}
+      button.close{padding:0;background-color:transparent;border:0;-webkit-appearance:none}
+      .close{padding:1rem;margin:-1rem -1rem -1rem auto}
+      .alert-dismissible .close{position:absolute;top:0;right:0;padding:.75rem 1.25rem;color:inherit}
+  </style>
+  {% block head %}{% endblock %}
+  <style>{% block style %}{% endblock %}</style>
+</head>
+<body class="layui-layout-body">
+<div class="layui-layout layui-layout-admin">
+  <div class="layui-header">
+    <a href="{{ url_for('index') }}"><div class="layui-logo">仪器管理系统</div></a>
+    <!-- 头部区域（可配合layui已有的水平导航） -->
+    <ul class="layui-nav layui-layout-right">
+      <li class="layui-nav-item">
+        <a href="javascript:;">
+          <img src="../static/icon.jpg" class="layui-nav-img">
+          {{ name }}
+        </a>
+        <dl class="layui-nav-child">
+          <dd><a href="{{ url_for('user_info', id=current_user.admin_id) }}">个人信息</a></dd>
+          <dd><a href="{{ url_for('change_password') }}">修改密码</a></dd>
+        </dl>
+      </li>
+      <li class="layui-nav-item"><a href="{{ url_for('logout') }}">退出登录</a></li>
+    </ul>
+  </div>
+
+  <div class="layui-side layui-bg-black">
+    <div class="layui-side-scroll">
+      <!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+      <ul class="layui-nav layui-nav-tree"  lay-filter="test">
+        <li class="layui-nav-item {% if request.endpoint == 'index' %}layui-nav-itemed{% endif %}">
+          <a class="" href="javascript:;">📊 数据分析</a>
+          <dl class="layui-nav-child">
+             <dd {% if request.endpoint == 'index' %}class="layui-this"{% endif %}><a href="{{ url_for('index') }}">📈 系统概览</a></dd>
+           </dl>
+        </li>
+        <li class="layui-nav-item {% if request.endpoint in ['search_instrument', 'new_store', 'storage', 'borrow', 'return_instrument'] %}layui-nav-itemed{% endif %}">
+          <a class="" href="javascript:;">🔬 仪器管理</a>
+          <dl class="layui-nav-child">
+             <dd {% if request.endpoint == 'search_instrument' %}class="layui-this"{% endif %}><a href="{{ url_for('search_instrument') }}">🔍 仪器查询</a></dd>
+             <dd {% if request.endpoint == 'new_store' %}class="layui-this"{% endif %}><a href="{{ url_for('new_store') }}">📝 新仪器登记</a></dd>
+             <dd {% if request.endpoint == 'storage' %}class="layui-this"{% endif %}><a href="{{ url_for('storage') }}">📦 设备入库</a></dd>
+             <dd {% if request.endpoint == 'borrow' %}class="layui-this"{% endif %}><a href="{{ url_for('borrow') }}">📤 仪器借用</a></dd>
+             <dd {% if request.endpoint == 'return_instrument' %}class="layui-this"{% endif %}><a href="{{ url_for('return_instrument') }}">📥 归还仪器</a></dd>
+           </dl>
+        </li>
+        <li class="layui-nav-item {% if request.endpoint == 'search_student' %}layui-nav-itemed{% endif %}">
+          <a href="javascript:;">👥 用户管理</a>
+          <dl class="layui-nav-child">
+             <dd {% if request.endpoint == 'search_student' %}class="layui-this"{% endif %}><a href="{{ url_for('search_student') }}">🔍 用户查询</a></dd>
+          </dl>
+        </li>
+        <li class="layui-nav-item {% if request.endpoint in ['change_info', 'change_password', 'user_info'] %}layui-nav-itemed{% endif %}">
+          <a href="javascript:;">⚙️ 系统设置</a>
+          <dl class="layui-nav-child">
+             <dd {% if request.endpoint == 'change_info' %}class="layui-this"{% endif %}><a href="{{ url_for('change_info') }}">👤 个人信息</a></dd>
+             <dd {% if request.endpoint == 'change_password' %}class="layui-this"{% endif %}><a href="{{ url_for('change_password') }}">🔐 修改密码</a></dd>
+          </dl>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="layui-body">
+    <!-- 内容主体区域 -->
+    <div class="layui-card layui-row layui-col-space10" style="margin:15px 10px;width:100%;">
+        {% for message in get_flashed_messages() %}
+        <div class="alert alert-warning">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                {{ message }}
+        </div>
+        {% endfor %}
+        {% block card %}{% endblock %}
+        <div class="layui-card-body">
+        {% block body %}
+        {% endblock %}
+        </div>
+    </div>
+  </div>
+
+  <div class="layui-footer">
+    Copyright 2019 Construct&nbsp;&nbsp;|&nbsp;&nbsp;版权所有:信息162许致立
+  </div>
+</div>
+<script src="../static/layui/layui.js"></script>
+<script>
+
+layui.use('element', function(){
+  var element = layui.element;
+
+  // LayUI导航组件初始化
+  element.init();
+
+});
+</script>
+
+{% block script %}
+
+{% endblock %}
+
+</body>
+</html>
